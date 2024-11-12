@@ -1,5 +1,5 @@
-use std::io::{self, stdin};
-
+use std::io::{self, stdin, Read, Write};
+use std::fs::{File, OpenOptions};
 struct Task {
     description: String,
     completed: bool,
@@ -7,6 +7,7 @@ struct Task {
 
 fn main() {
     let mut tasks: Vec<Task> = Vec::new();
+    let file = "data.txt";
     loop {
         
         println!("Выберите действие:");
@@ -15,6 +16,8 @@ fn main() {
         println!("3. Просмотреть задачи");
         println!("4. Отметить задачу как выполненную");
         println!("5. Выход");
+        println!("6. Сохранение данных в файл");
+        println!("7. Загрузка данных из файла");
 
         let mut choice = String::new();
         io::stdin().read_line(&mut choice).expect("Ошибка чтения строки");
@@ -68,6 +71,14 @@ fn main() {
                 break;
             }
 
+            6 => {
+                save_to_file(file, &tasks);
+            }
+
+            7 => {
+                load_from_file(file, &mut tasks);
+            }
+
             _ => {
                 println!("Неверный выбор. Попробуйте снова.");
             }
@@ -105,3 +116,51 @@ fn complete_task(tasks: &mut Vec<Task>, index: usize) {
     }
 }
 
+fn save_to_file(file: &str, tasks: &Vec<Task>) {
+    let mut file = match OpenOptions::new().write(true).create(true).open(file) {
+        Ok(file) => file,
+        Err(_) => {
+            println!("Ошибка при открытии файла для записи!");
+            return;
+        }
+    };
+
+    for task in tasks {
+        let line = format!("{} {}\n", task.completed, task.description);
+        if let Err(_) = file.write_all(line.as_bytes()) {
+            println!("Ошибка при записи в файл");
+            return;
+        }
+    }
+
+    println!("Данные сохранены в файле");
+}
+
+fn load_from_file(file: &str, tasks: &mut Vec<Task>) {
+    let mut file = match File::open(file) {
+        Ok(file) => file,
+        Err(_) => {
+            println!("Файл не найден!");
+            return;
+        }
+    };
+
+    let mut cont = String::new();
+    if let Err(_) = file.read_to_string(&mut cont) {
+        println!("Ошибка при чтении файла!");
+        return;
+    }
+    
+    for line in cont.lines() {
+        let parts: Vec<&str> = line.splitn(2, ' ').collect();
+        if parts.len() == 2 {
+            let completed = if parts[0] == "true" {true} else {false};
+            let description = parts[1].to_string();
+            tasks.push(Task{
+                description,
+                completed,
+            });
+        }
+    }
+    println!("Данные успешно загружены из файла");
+}
