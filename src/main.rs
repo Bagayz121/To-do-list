@@ -152,7 +152,7 @@ fn load_from_file(file: &str, tasks: &mut Vec<Task>) {
     }
     
     for line in cont.lines() {
-        let parts: Vec<&str> = line.splitn(2, ' ').collect();
+        let parts: Vec<&str> = line.split(' ').collect();
         if parts.len() == 2 {
             let completed = if parts[0] == "true" {true} else {false};
             let description = parts[1].to_string();
